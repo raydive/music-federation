@@ -1,6 +1,6 @@
 use std::net::SocketAddr;
 
-use async_graphql::{EmptyMutation, EmptySubscription, Object, Schema, SimpleObject, ID, Context};
+use async_graphql::{Context, EmptyMutation, EmptySubscription, Object, Schema, SimpleObject, ID};
 use async_graphql_axum::{GraphQLRequest, GraphQLResponse};
 use axum::{
     extract::State,
@@ -47,9 +47,7 @@ async fn graphql_handler(
     let response = schema.execute(req.into_inner()).await;
     match response.into_result() {
         Ok(res) => Ok(res.into()),
-        Err(_) => {
-            Err((StatusCode::INTERNAL_SERVER_ERROR, "Internal server error").into_response())
-        }
+        Err(_) => Err((StatusCode::INTERNAL_SERVER_ERROR, "Internal server error").into_response()),
     }
 }
 
@@ -82,12 +80,15 @@ async fn main() {
         Query,
         async_graphql::EmptyMutation,
         async_graphql::EmptySubscription,
-    ).data(data).finish();
+    )
+    .data(data)
+    .finish();
     let app = Router::new()
         .route("/", post(graphql_handler))
         .with_state(schema);
 
     let addr = SocketAddr::from(([127, 0, 0, 1], 3000));
+    println!("Listening on {}", addr);
     axum::Server::bind(&addr)
         .serve(app.into_make_service())
         .await
