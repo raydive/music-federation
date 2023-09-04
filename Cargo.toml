@@ -2,6 +2,7 @@
 members = [
     "album",
     "musician",
+    "instrument",
 ]
 
 [workspace.dependencies]

@@ -12,31 +12,23 @@ use axum::{
 
 #[derive(SimpleObject, Debug, Clone)]
 #[graphql(shareable)]
-struct Musician {
+struct Instrument {
     id: ID,
     name: String,
-    age: i32,
 }
 
 struct Query;
 
 #[Object]
 impl Query {
-    async fn musicians(&self, ctx: &Context<'_>) -> Vec<Musician> {
-        let data = ctx.data_unchecked::<Vec<Musician>>();
+    async fn instruments(&self, ctx: &Context<'_>) -> Vec<Instrument> {
+        let data = ctx.data_unchecked::<Vec<Instrument>>();
         data.to_vec()
     }
 
-    async fn find_musician(&self, ctx: &Context<'_>, id: ID) -> Option<Musician> {
-        let data = ctx.data_unchecked::<Vec<Musician>>();
-        data.iter().find(|m| m.id == id).cloned()
-    }
-
-    // Apollo Federationで使用する
-    // 例えば別のサブグラフでmusicianの情報が必要な場合、idを用いたresolverになる
     #[graphql(entity)]
-    async fn find_musician_entity_by_id(&self, ctx: &Context<'_>, id: ID) -> Option<Musician> {
-        let data = ctx.data_unchecked::<Vec<Musician>>();
+    async fn find_instrument(&self, ctx: &Context<'_>, id: ID) -> Option<Instrument> {
+        let data = ctx.data_unchecked::<Vec<Instrument>>();
         data.iter().find(|m| m.id == id).cloned()
     }
 }
@@ -55,25 +47,17 @@ async fn graphql_handler(
 #[tokio::main]
 async fn main() {
     let data = vec![
-        Musician {
+        Instrument {
             id: "1".into(),
-            name: "John".to_string(),
-            age: 20,
+            name: "Guitar".to_string(),
         },
-        Musician {
+        Instrument {
             id: "2".into(),
-            name: "Paul".to_string(),
-            age: 22,
+            name: "Bass".to_string(),
         },
-        Musician {
+        Instrument {
             id: "3".into(),
-            name: "George".to_string(),
-            age: 24,
-        },
-        Musician {
-            id: "4".into(),
-            name: "Ringo".to_string(),
-            age: 26,
+            name: "Drums".to_string(),
         },
     ];
 
@@ -88,7 +72,7 @@ async fn main() {
         .route("/", post(graphql_handler))
         .with_state(schema);
 
-    let addr = SocketAddr::from(([127, 0, 0, 1], 3000));
+    let addr = SocketAddr::from(([127, 0, 0, 1], 3002));
     println!("Listening on {}", addr);
     axum::Server::bind(&addr)
         .serve(app.into_make_service())
