@@ -1,7 +1,7 @@
 use std::net::SocketAddr;
 
 use async_graphql::{
-    ComplexObject, Context, EmptyMutation, EmptySubscription, Object, Schema, SimpleObject, ID,
+    Context, EmptyMutation, EmptySubscription, Object, Schema, SimpleObject, ID,
 };
 use async_graphql_axum::{GraphQLRequest, GraphQLResponse};
 use axum::{
@@ -16,27 +16,7 @@ use axum::{
 struct Album {
     id: ID,
     title: String,
-    musicians: Vec<Musician>,
-}
-
-#[derive(SimpleObject, Debug, Clone)]
-#[graphql(shareable)]
-struct Musician {
-    id: ID,
-    instruments: Vec<Instrument>,
-}
-
-#[ComplexObject]
-impl Musician {
-    async fn main_instruments(&self) -> Instrument {
-        self.instruments[0].clone()
-    }
-}
-
-#[derive(SimpleObject, Debug, Clone)]
-#[graphql(shareable)]
-struct Instrument {
-    id: ID,
+    year: i32,
 }
 
 struct Query;
@@ -72,46 +52,23 @@ async fn graphql_handler(
     }
 }
 
-struct Data {
-    albums: Vec<Album>,
-    musicians: Vec<Musician>,
-}
-
 #[tokio::main]
 async fn main() {
-    let data = vec![
+    let albums = vec![
         Album {
             id: "1".into(),
             title: "album1".into(),
-            musicians: vec![
-                Musician {
-                    id: "1".into(),
-                    instruments: vec![Instrument { id: "1".into() }, Instrument { id: "2".into() }],
-                },
-                Musician {
-                    id: "2".into(),
-                    instruments: vec![Instrument { id: "3".into() }],
-                },
-            ],
+            year: 2020,
         },
         Album {
             id: "2".into(),
             title: "album2".into(),
-            musicians: vec![
-                Musician {
-                    id: "1".into(),
-                    instruments: vec![Instrument { id: "3".into() }, Instrument { id: "2".into() }],
-                },
-                Musician {
-                    id: "3".into(),
-                    instruments: vec![Instrument { id: "1".into() }],
-                },
-            ],
+            year: 2021,
         },
     ];
 
     let schema = Schema::build(Query, EmptyMutation, EmptySubscription)
-        .data(data)
+        .data(albums)
         .finish();
 
     let app = Router::new()
