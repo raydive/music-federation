@@ -7,8 +7,14 @@ use axum::{
     http::StatusCode,
     response::{IntoResponse, Response},
     routing::post,
-    Router,
+    Router
 };
+use tokio::net::TcpListener;
+
+#[derive(SimpleObject, Debug, Clone)]
+struct Album {
+    id: ID,
+}
 
 #[derive(SimpleObject, Debug, Clone)]
 #[graphql(shareable)]
@@ -16,6 +22,7 @@ struct Musician {
     id: ID,
     name: String,
     age: i32,
+    albums: Vec<Album>,
 }
 
 struct Query;
@@ -39,6 +46,12 @@ impl Query {
         let data = ctx.data_unchecked::<Vec<Musician>>();
         data.iter().find(|m| m.id == id).cloned()
     }
+
+    #[graphql(entity)]
+    async fn find_album_entity_by_id(&self, ctx: &Context<'_>, id: ID) -> Option<Album> {
+        let data = ctx.data_unchecked::<Vec<Album>>();
+        data.iter().find(|m| m.id == id).cloned()
+    }
 }
 
 async fn graphql_handler(
@@ -54,26 +67,38 @@ async fn graphql_handler(
 
 #[tokio::main]
 async fn main() {
+    let albums = vec![
+        Album {
+            id: "1".into(),
+        },
+        Album {
+            id: "2".into(),
+        },
+    ];
     let data = vec![
         Musician {
             id: "1".into(),
             name: "John".to_string(),
             age: 20,
+            albums: albums.clone(),
         },
         Musician {
             id: "2".into(),
             name: "Paul".to_string(),
             age: 22,
+            albums: albums.clone(),
         },
         Musician {
             id: "3".into(),
             name: "George".to_string(),
             age: 24,
+            albums: albums.clone(),
         },
         Musician {
             id: "4".into(),
             name: "Ringo".to_string(),
             age: 26,
+            albums: albums.clone(),
         },
     ];
 
@@ -83,15 +108,16 @@ async fn main() {
         async_graphql::EmptySubscription,
     )
     .data(data)
+    .data(albums)
     .finish();
     let app = Router::new()
         .route("/", post(graphql_handler))
         .with_state(schema);
 
     let addr = SocketAddr::from(([127, 0, 0, 1], 3000));
+    let listner = TcpListener::bind(&addr).await.unwrap();
     println!("Listening on {}", addr);
-    axum::Server::bind(&addr)
-        .serve(app.into_make_service())
+    axum::serve(listner, app.into_make_service())
         .await
         .unwrap();
 }

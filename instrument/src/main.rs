@@ -7,8 +7,9 @@ use axum::{
     http::StatusCode,
     response::{IntoResponse, Response},
     routing::post,
-    Router,
+    Router
 };
+use tokio::net::TcpListener;
 
 #[derive(SimpleObject, Debug, Clone)]
 #[graphql(shareable)]
@@ -73,9 +74,9 @@ async fn main() {
         .with_state(schema);
 
     let addr = SocketAddr::from(([127, 0, 0, 1], 3002));
+    let listner = TcpListener::bind(&addr).await.unwrap();
     println!("Listening on {}", addr);
-    axum::Server::bind(&addr)
-        .serve(app.into_make_service())
+    axum::serve(listner, app.into_make_service())
         .await
         .unwrap();
 }

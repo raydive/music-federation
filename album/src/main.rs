@@ -11,6 +11,7 @@ use axum::{
     routing::post,
     Router,
 };
+use tokio::net::TcpListener;
 
 #[derive(SimpleObject, Debug, Clone)]
 struct Album {
@@ -76,10 +77,9 @@ async fn main() {
         .with_state(schema);
 
     let addr = SocketAddr::from(([0, 0, 0, 0], 3001));
+    let listner = TcpListener::bind(&addr).await.unwrap();
     println!("Listening on {}", addr);
-
-    axum::Server::bind(&addr)
-        .serve(app.into_make_service())
+    axum::serve(listner, app.into_make_service())
         .await
         .unwrap();
 }
