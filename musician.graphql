@@ -1,0 +1,27 @@
+type Album @key(fields: "id") {
+	id: ID!
+}
+
+
+
+
+
+type Musician @key(fields: "id") @shareable {
+	id: ID!
+	name: String!
+	age: Int!
+	albums: [Album!]!
+}
+
+type Query {
+	musicians: [Musician!]!
+	findMusician(id: ID!): Musician
+}
+
+
+extend schema @link(
+	url: "https://specs.apollo.dev/federation/v2.3",
+	import: ["@key", "@tag", "@shareable", "@inaccessible", "@override", "@external", "@provides", "@requires", "@composeDirective", "@interfaceObject"]
+)
+directive @include(if: Boolean!) on FIELD | FRAGMENT_SPREAD | INLINE_FRAGMENT
+directive @skip(if: Boolean!) on FIELD | FRAGMENT_SPREAD | INLINE_FRAGMENT
